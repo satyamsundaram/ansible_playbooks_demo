@@ -1,0 +1,30 @@
+- name: Ansible playbook to install Apache and host 2048 game on it
+  hosts: vm
+  become: yes
+  become_method: sudo
+  remote_user: ansible
+  gather_facts: yes
+  tasks:
+    - name: Install latest version of apache2
+      apt:
+        name: apache2
+        state: latest
+        update_cache: yes
+
+    - name: Delete default index.html file
+      file:
+        path: /var/www/html/index.html
+        state: absent
+
+    - name: Clone git repo inside /var/www/html
+      git:
+        repo: https://github.com/gabrielecirulli/2048.git
+        dest: /var/www/html
+        clone: yes
+      notify: Restart apache2
+  
+  handlers:
+    - name: Restart apache2
+      service:
+        name: apache2
+        state: restarted
