@@ -1,0 +1,8 @@
+---
+- hosts: vm
+  become: yes
+  become_method: sudo
+  remote_user: ansible
+  gather_facts: yes
+  roles:
+      - apache_host

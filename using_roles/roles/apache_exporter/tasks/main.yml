@@ -1,0 +1,56 @@
+---
+# tasks file for apache_exporter
+- name: Create prometheus group
+  group:
+    name: prometheus
+    state: present
+    # system: yes
+
+- name: Create prometheus user
+  user:
+    name: prometheus
+    group: prometheus
+    # shell: /sbin/nologin
+    system: yes
+    state: present
+    createhome: no
+
+- name: Create opt directory for prometheus
+  file:
+    path: /opt/prometheus
+    state: directory
+    # owner: prometheus
+    # group: prometheus
+    # mode: 0755
+
+- name: Download apache exporter
+  get_url:
+    url: https://github.com/Lusitaniae/apache_exporter/releases/download/v{{ apache_exporter_version }}/apache_exporter-{{ apache_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt/prometheus
+
+- name: Extract apache exporter
+  unarchive:
+    src: /opt/prometheus/apache_exporter-{{ apache_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt/prometheus
+    remote_src: yes
+
+- name: Create symlink for apache exporter
+  file:
+    src: /opt/prometheus/apache_exporter-{{ apache_exporter_version }}.linux-amd64/apache_exporter
+    dest: /usr/sbin/apache_exporter
+    state: link
+
+- name: Install unit file for apache exporter to systemd
+  template:
+    src: files/apache_exporter.service
+    dest: /etc/systemd/system/apache_exporter.service
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start apache exporter
+  service:
+    name: apache_exporter
+    state: started
+    enabled: yes

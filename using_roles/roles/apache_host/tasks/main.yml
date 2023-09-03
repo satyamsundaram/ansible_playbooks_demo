@@ -1,0 +1,19 @@
+---
+# tasks file for apache_host
+- name: Install latest version of apache2
+  apt:
+    name: apache2
+    state: latest
+    update_cache: yes
+
+- name: Delete default index.html file
+  file:
+    path: "{{ apache_custom_directory }}/index.html"
+    state: absent
+
+- name: "Clone git repo inside {{ apache_custom_directory }}"
+  git:
+    repo: "{{ repo_url }}"
+    dest: "{{ apache_custom_directory }}"
+    clone: yes
+  notify: Restart apache2

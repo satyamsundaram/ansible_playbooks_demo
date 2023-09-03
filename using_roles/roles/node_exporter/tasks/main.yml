@@ -1,0 +1,54 @@
+---
+# tasks file for node_exporter
+- name: Create prometheus group
+  group:
+    name: prometheus
+    state: present
+    # system: yes
+
+- name: Create prometheus user
+  user:
+    name: prometheus
+    group: prometheus
+    # shell: /sbin/nologin
+    system: yes
+    state: present
+    createhome: no
+
+- name: Create opt directory for prometheus
+  file:
+    path: /opt/prometheus
+    state: directory
+    # owner: prometheus
+    # group: prometheus
+    # mode: 0755
+
+- name: Download node exporter
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt/prometheus
+
+- name: Extract node exporter
+  unarchive:
+    src: /opt/prometheus/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    dest: /opt/prometheus
+    remote_src: yes
+    # creates: /opt/prometheus/node_exporter-{{ node_exporter_version }}.linux-amd64
+
+- name: Create symlink for node exporter
+  file:
+    src: /opt/prometheus/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    state: link
+
+- name: Install unit file to systemd
+  template:
+    src: files/node_exporter.service #node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+
+- name: Configure systemd to use the new service
+  systemd:
+    daemon_reload: yes
+    name: node_exporter.service
+    enabled: yes
+    state: started
